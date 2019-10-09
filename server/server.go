@@ -169,10 +169,9 @@ func OutputValidateRequests(requests []*Request) (error){
 
   return errors.New("Output validation failed")
 }
-func NewInternalErrorResponse(index int, code... string) (*client.Response) {
-
+func NewErrorResponse(index int, status int, code... string) (*client.Response) {
   if code == nil {
-    code = append(code, "INTERNAL_SERVER_ERROR")
+    panic("No errors defined for server error response")
   }
 
   var data []client.ErrorResponse
@@ -183,26 +182,24 @@ func NewInternalErrorResponse(index int, code... string) (*client.Response) {
 
   return &client.Response{
     Index: index,
-    Status: http.StatusInternalServerError,
+    Status: status,
     Errors: data,
   }
+}
+func NewInternalErrorResponse(index int, code... string) (*client.Response) {
+  if code == nil {
+    // should we force this on developer, eg panic
+    code = append(code, "INTERNAL_SERVER_ERROR")
+  }
+
+  return NewErrorResponse(index, http.StatusInternalServerError, code...)
 }
 func NewClientErrorResponse(index int, code... string) (*client.Response) {
   if code == nil {
     panic("No errors defined for client error response")
   }
 
-  var data []client.ErrorResponse
-  for _, c := range code {
-    e := E.MAP[c]
-    data = append(data, client.ErrorResponse{Code: e.Code, Error: e.Error["en"]})
-  }
-
-  return &client.Response{
-    Index: index,
-    Status: http.StatusNotFound,
-    Errors: data,
-  }
+  return NewErrorResponse(index, http.StatusNotFound, code...)
 }
 func NewOkResponse(index int, data interface{}) (*client.Response) {
   return &client.Response{
@@ -210,6 +207,11 @@ func NewOkResponse(index int, data interface{}) (*client.Response) {
     Status: http.StatusNotFound,
     Errors: []client.ErrorResponse{},
     Ok: data,
+  }
+}
+func FailAllRequestsWithErrorResponse(requests []*Request, status int, code... string) {
+  for _,r := range requests {
+    r.Output = NewErrorResponse(r.Index, status, code...)
   }
 }
 func FailAllRequestsWithClientErrorResponse(requests []*Request, code... string) {
