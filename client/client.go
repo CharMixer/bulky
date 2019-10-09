@@ -13,8 +13,8 @@ type ErrorResponse struct {
 type Response struct {
   Index  int             `json:"index" validate:"min=0"`
   Status int             `json:"status" validate:"required"`
-  Errors []ErrorResponse `json:"errors" validate:"dive"`
-  Ok     interface{}     `json:"ok" validate:"dive"`
+  Errors []ErrorResponse `json:"errors" validate:"omitempty,dive"`
+  Ok     interface{}     `json:"ok" validate:"omitempty,dive"`
 }
 
 type Responses []Response
