@@ -183,24 +183,25 @@ func NewErrorResponse(index int, status int, code... int) (*client.Response) {
     Errors: data,
   }
 }
-func NewInternalErrorResponse(index int) (*client.Response) {
-  return NewErrorResponse(index, http.StatusInternalServerError, E.INTERNAL_SERVER_ERROR)
-}
-func NewClientOperationAbortedResponse(index int) (*client.Response) {
-  return NewErrorResponse(index, http.StatusNotFound, E.OPERATION_ABORTED)
-}
-func NewServerOperationAbortedResponse(index int) (*client.Response) {
-  return NewErrorResponse(index, http.StatusInternalServerError, E.OPERATION_ABORTED)
-}
-func NewServiceUnavailableResponse(index int) (*client.Response) {
-  return NewErrorResponse(index, http.StatusServiceUnavailable)
-}
 func NewClientErrorResponse(index int, code... int) (*client.Response) {
   if code == nil {
     panic("No errors defined for client error response")
   }
 
   return NewErrorResponse(index, http.StatusNotFound, code...)
+}
+
+func NewInternalErrorResponse(index int) (*client.Response) {
+  return NewErrorResponse(index, http.StatusInternalServerError, E.INTERNAL_SERVER_ERROR)
+}
+func NewServiceUnavailableResponse(index int) (*client.Response) {
+  return NewErrorResponse(index, http.StatusServiceUnavailable)
+}
+func NewServerOperationAbortedResponse(index int) (*client.Response) {
+  return NewErrorResponse(index, http.StatusInternalServerError, E.OPERATION_ABORTED)
+}
+func NewClientOperationAbortedResponse(index int) (*client.Response) {
+  return NewClientErrorResponse(index, http.StatusNotFound, E.OPERATION_ABORTED)
 }
 
 func FailAllRequestsWithErrorResponse(requests []*Request, status int, code... int) {
