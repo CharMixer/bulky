@@ -181,6 +181,7 @@ func NewErrorResponse(index int, status int, code... int) (*client.Response) {
     Index: index,
     Status: status,
     Errors: data,
+    Ok: nil,
   }
 }
 func NewClientErrorResponse(index int, code... int) (*client.Response) {
@@ -229,7 +230,7 @@ func NewOkResponse(index int, data interface{}) (*client.Response) {
   return &client.Response{
     Index: index,
     Status: http.StatusNotFound,
-    Errors: []client.ErrorResponse{},
+    Errors: nil,
     Ok: data,
   }
 }
