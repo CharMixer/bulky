@@ -104,7 +104,7 @@ func HandleRequest(iRequests interface{}, iHandleRequests IHandleRequests, param
       // fail all
       for _,request := range requests {
         if request.Output == nil {
-          request.Output = NewClientErrorResponse(request.Index, E.OPERATION_ABORTED)
+          request.Output = NewClientOperationAbortedResponse(request.Index)
         }
 
         responses = append(responses, request.Output)
@@ -164,11 +164,12 @@ func OutputValidateRequests(requests []*Request) (error){
 
   // deny by default
   for _,request := range passedRequests {
-    request.Output = NewInternalErrorResponse(request.Index, E.OPERATION_ABORTED)
+    request.Output = NewServerOperationAbortedResponse(request.Index)
   }
 
   return errors.New("Output validation failed")
 }
+
 func NewErrorResponse(index int, status int, code... int) (*client.Response) {
   var data []client.ErrorResponse
   for _, c := range code {
@@ -182,13 +183,17 @@ func NewErrorResponse(index int, status int, code... int) (*client.Response) {
     Errors: data,
   }
 }
-func NewInternalErrorResponse(index int, code... int) (*client.Response) {
-  if code == nil {
-    // should we force this on developer, eg panic
-    code = append(code, E.INTERNAL_SERVER_ERROR)
-  }
-
-  return NewErrorResponse(index, http.StatusInternalServerError, code...)
+func NewInternalErrorResponse(index int) (*client.Response) {
+  return NewErrorResponse(index, http.StatusInternalServerError, E.INTERNAL_SERVER_ERROR)
+}
+func NewClientOperationAbortedResponse(index int) (*client.Response) {
+  return NewErrorResponse(index, http.StatusNotFound, E.OPERATION_ABORTED)
+}
+func NewServerOperationAbortedResponse(index int) (*client.Response) {
+  return NewErrorResponse(index, http.StatusInternalServerError, E.OPERATION_ABORTED)
+}
+func NewServiceUnavailableResponse(index int) (*client.Response) {
+  return NewErrorResponse(index, http.StatusServiceUnavailable)
 }
 func NewClientErrorResponse(index int, code... int) (*client.Response) {
   if code == nil {
@@ -197,21 +202,17 @@ func NewClientErrorResponse(index int, code... int) (*client.Response) {
 
   return NewErrorResponse(index, http.StatusNotFound, code...)
 }
-func NewOkResponse(index int, data interface{}) (*client.Response) {
-  return &client.Response{
-    Index: index,
-    Status: http.StatusNotFound,
-    Errors: []client.ErrorResponse{},
-    Ok: data,
-  }
-}
+
 func FailAllRequestsWithErrorResponse(requests []*Request, status int, code... int) {
   for _,r := range requests {
     r.Output = NewErrorResponse(r.Index, status, code...)
   }
 }
-func FailAllRequestsWithOperationAbortedResponse(requests []*Request) {
+func FailAllRequestsWithClientOperationAbortedResponse(requests []*Request) {
   FailAllRequestsWithErrorResponse(requests, http.StatusNotFound, E.OPERATION_ABORTED)
+}
+func FailAllRequestsWithServerOperationAbortedResponse(requests []*Request) {
+  FailAllRequestsWithErrorResponse(requests, http.StatusInternalServerError, E.OPERATION_ABORTED)
 }
 func FailAllRequestsWithClientErrorResponse(requests []*Request, code... int) {
   FailAllRequestsWithErrorResponse(requests, http.StatusNotFound, code...)
@@ -221,4 +222,13 @@ func FailAllRequestsWithInternalErrorResponse(requests []*Request) {
 }
 func FailAllRequestsWithServiceUnavailableResponse(requests []*Request) {
   FailAllRequestsWithErrorResponse(requests, http.StatusServiceUnavailable)
+}
+
+func NewOkResponse(index int, data interface{}) (*client.Response) {
+  return &client.Response{
+    Index: index,
+    Status: http.StatusNotFound,
+    Errors: []client.ErrorResponse{},
+    Ok: data,
+  }
 }
