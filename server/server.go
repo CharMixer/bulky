@@ -229,7 +229,7 @@ func FailAllRequestsWithServiceUnavailableResponse(requests []*Request) {
 func NewOkResponse(index int, data interface{}) (*client.Response) {
   return &client.Response{
     Index: index,
-    Status: http.StatusNotFound,
+    Status: http.StatusOK,
     Errors: nil,
     Ok: data,
   }
