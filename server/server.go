@@ -52,7 +52,7 @@ func HandleRequest(iRequests interface{}, iHandleRequests IHandleRequests, param
     // fail all
     for _,request := range requests {
       if request.Output == nil {
-        request.Output = NewClientErrorResponse(request.Index, "MAX_REQUESTS_EXCEEDED")
+        request.Output = NewClientErrorResponse(request.Index, E.MAX_REQUESTS_EXCEEDED)
       }
 
       responses = append(responses, request.Output)
@@ -70,7 +70,7 @@ func HandleRequest(iRequests interface{}, iHandleRequests IHandleRequests, param
       if request.Input == nil {
         // if we dont allow the empty set, return an error to the user
         if !params.EnableEmptyRequest {
-          request.Output = NewClientErrorResponse(request.Index, "EMPTY_REQUEST_NOT_ALLOWED")
+          request.Output = NewClientErrorResponse(request.Index, E.EMPTY_REQUEST_NOT_ALLOWED)
 
           errorsFound = true
           continue
@@ -84,7 +84,7 @@ func HandleRequest(iRequests interface{}, iHandleRequests IHandleRequests, param
 
           var errorResponses []client.ErrorResponse
           for _, e := range err.(validator.ValidationErrors) {
-            errorResponses = append(errorResponses, client.ErrorResponse{Code: E.MAP["INPUT_VALIDATION_FAILED"].Code, Error: e.Translate(nil)})
+            errorResponses = append(errorResponses, client.ErrorResponse{Code: E.INPUT_VALIDATION_FAILED, Error: e.Translate(nil)})
           }
 
           request.Output = &client.Response{
@@ -104,7 +104,7 @@ func HandleRequest(iRequests interface{}, iHandleRequests IHandleRequests, param
       // fail all
       for _,request := range requests {
         if request.Output == nil {
-          request.Output = NewClientErrorResponse(request.Index, "FAILED_DUE_TO_OTHER_ERRORS")
+          request.Output = NewClientErrorResponse(request.Index, E.OPERATION_ABORTED)
         }
 
         responses = append(responses, request.Output)
@@ -164,20 +164,16 @@ func OutputValidateRequests(requests []*Request) (error){
 
   // deny by default
   for _,request := range passedRequests {
-    request.Output = NewInternalErrorResponse(request.Index, "OPERATION_ABORTED")
+    request.Output = NewInternalErrorResponse(request.Index, E.OPERATION_ABORTED)
   }
 
   return errors.New("Output validation failed")
 }
-func NewErrorResponse(index int, status int, code... string) (*client.Response) {
-  if code == nil {
-    panic("No errors defined for server error response")
-  }
-
+func NewErrorResponse(index int, status int, code... int) (*client.Response) {
   var data []client.ErrorResponse
   for _, c := range code {
     e := E.MAP[c]
-    data = append(data, client.ErrorResponse{Code: e.Code, Error: e.Error["en"]})
+    data = append(data, client.ErrorResponse{Code: c, Error: e["en"]})
   }
 
   return &client.Response{
@@ -186,15 +182,15 @@ func NewErrorResponse(index int, status int, code... string) (*client.Response) 
     Errors: data,
   }
 }
-func NewInternalErrorResponse(index int, code... string) (*client.Response) {
+func NewInternalErrorResponse(index int, code... int) (*client.Response) {
   if code == nil {
     // should we force this on developer, eg panic
-    code = append(code, "INTERNAL_SERVER_ERROR")
+    code = append(code, E.INTERNAL_SERVER_ERROR)
   }
 
   return NewErrorResponse(index, http.StatusInternalServerError, code...)
 }
-func NewClientErrorResponse(index int, code... string) (*client.Response) {
+func NewClientErrorResponse(index int, code... int) (*client.Response) {
   if code == nil {
     panic("No errors defined for client error response")
   }
@@ -209,18 +205,20 @@ func NewOkResponse(index int, data interface{}) (*client.Response) {
     Ok: data,
   }
 }
-func FailAllRequestsWithErrorResponse(requests []*Request, status int, code... string) {
+func FailAllRequestsWithErrorResponse(requests []*Request, status int, code... int) {
   for _,r := range requests {
     r.Output = NewErrorResponse(r.Index, status, code...)
   }
 }
-func FailAllRequestsWithClientErrorResponse(requests []*Request, code... string) {
-  for _,r := range requests {
-    r.Output = NewClientErrorResponse(r.Index, code...)
-  }
+func FailAllRequestsWithOperationAbortedResponse(requests []*Request) {
+  FailAllRequestsWithErrorResponse(requests, http.StatusNotFound, E.OPERATION_ABORTED)
 }
-func FailAllRequestsWithInternalErrorResponse(requests []*Request, code... string) {
-  for _,r := range requests {
-    r.Output = NewInternalErrorResponse(r.Index, code...)
-  }
+func FailAllRequestsWithClientErrorResponse(requests []*Request, code... int) {
+  FailAllRequestsWithErrorResponse(requests, http.StatusNotFound, code...)
+}
+func FailAllRequestsWithInternalErrorResponse(requests []*Request) {
+  FailAllRequestsWithErrorResponse(requests, http.StatusInternalServerError, E.INTERNAL_SERVER_ERROR)
+}
+func FailAllRequestsWithServiceUnavailableResponse(requests []*Request) {
+  FailAllRequestsWithErrorResponse(requests, http.StatusServiceUnavailable)
 }
