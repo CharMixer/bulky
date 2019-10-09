@@ -19,7 +19,7 @@ type Response struct {
 
 type Responses []Response
 
-func (r Responses) Unmarshal(i int, v interface{}) (rStatus int, rErr []ErrorResponse) {
+func Unmarshal(i int, r Responses, v interface{}) (rStatus int, rErr []ErrorResponse) {
   conf := &mapstructure.DecoderConfig{
       WeaklyTypedInput: false,
       Result:           &v,
