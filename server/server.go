@@ -52,7 +52,7 @@ func HandleRequest(iRequests interface{}, iHandleRequests IHandleRequests, param
     // fail all
     for _,request := range requests {
       if request.Output == nil {
-        request.Output = NewClientErrorResponse(request.Index, E.MAX_REQUESTS_EXCEEDED)
+        request.Output = NewBadRequestErrorResponse(request.Index, E.MAX_REQUESTS_EXCEEDED)
       }
 
       responses = append(responses, request.Output)
@@ -70,7 +70,7 @@ func HandleRequest(iRequests interface{}, iHandleRequests IHandleRequests, param
       if request.Input == nil {
         // if we dont allow the empty set, return an error to the user
         if !params.EnableEmptyRequest {
-          request.Output = NewClientErrorResponse(request.Index, E.EMPTY_REQUEST_NOT_ALLOWED)
+          request.Output = NewBadRequestErrorResponse(request.Index, E.EMPTY_REQUEST_NOT_ALLOWED)
 
           errorsFound = true
           continue
@@ -191,7 +191,13 @@ func NewClientErrorResponse(index int, code... int) (*client.Response) {
 
   return NewErrorResponse(index, http.StatusNotFound, code...)
 }
+func NewBadRequestErrorResponse(index int, code... int) (*client.Response) {
+  if code == nil {
+    panic("No errors defined for client error response")
+  }
 
+  return NewErrorResponse(index, http.StatusBadRequest, code...)
+}
 func NewInternalErrorResponse(index int) (*client.Response) {
   return NewErrorResponse(index, http.StatusInternalServerError, E.INTERNAL_SERVER_ERROR)
 }
