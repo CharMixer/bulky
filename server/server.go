@@ -78,8 +78,8 @@ func HandleRequest(iRequests interface{}, iHandleRequests IHandleRequests, param
       }
 
       // validate requests
-      if request.Output != nil { // if not the empty set, then validate
-        err := validate.Struct(request.Output)
+      if request.Input != nil { // if not the empty set, then validate
+        err := validate.Struct(request.Input)
         if err != nil {
 
           var errorResponses []client.ErrorResponse
