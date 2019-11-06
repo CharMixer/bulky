@@ -6,9 +6,8 @@ import (
 )
 
 type ErrorResponse struct {
-  Code  int         `json:"code" validate:"required"`
-  Error string      `json:"error" validate:"required"`
-  Data  interface{} `json:"data,omitempty" validate:"omitempty"`
+  Code  int    `json:"code" binding:"required"`
+  Error string `json:"error" binding:"required"`
 }
 
 type Response struct {

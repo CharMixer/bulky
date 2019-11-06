@@ -104,7 +104,7 @@ func HandleRequest(iRequests interface{}, iHandleRequests IHandleRequests, param
       // fail all
       for _,request := range requests {
         if request.Output == nil {
-          request.Output = NewClientOperationAbortedResponse(request.Index, nil)
+          request.Output = NewClientOperationAbortedResponse(request.Index)
         }
 
         responses = append(responses, request.Output)
@@ -170,55 +170,50 @@ func OutputValidateRequests(requests []*Request) (error){
   return errors.New("Output validation failed")
 }
 
-func NewErrorResponse(index int, status int, data interface{}, code... int) (*client.Response) {
-  var restErrors []client.ErrorResponse
+func NewErrorResponse(index int, status int, code... int) (*client.Response) {
+  var data []client.ErrorResponse
   for _, c := range code {
     e := E.MAP[c]
-
-    if e["en"] == "" {
-      panic(fmt.Sprintf("Error code '%d' is not defined in error map - missing 'en' definition for code", c))
-    }
-
-    restErrors = append(restErrors, client.ErrorResponse{Code: c, Error: e["en"]})
+    data = append(data, client.ErrorResponse{Code: c, Error: e["en"]})
   }
 
   return &client.Response{
     Index: index,
     Status: status,
-    Errors: restErrors,
+    Errors: data,
     Ok: nil,
   }
 }
-func NewClientErrorResponse(index int, data interface{}, code... int) (*client.Response) {
+func NewClientErrorResponse(index int, code... int) (*client.Response) {
   if code == nil {
     panic("No errors defined for client error response")
   }
 
-  return NewErrorResponse(index, http.StatusNotFound, data, code...)
+  return NewErrorResponse(index, http.StatusNotFound, code...)
 }
-func NewBadRequestErrorResponse(index int, data interface{}, code... int) (*client.Response) {
+func NewBadRequestErrorResponse(index int, code... int) (*client.Response) {
   if code == nil {
     panic("No errors defined for client error response")
   }
 
-  return NewErrorResponse(index, http.StatusBadRequest, data, code...)
+  return NewErrorResponse(index, http.StatusBadRequest, code...)
 }
 func NewInternalErrorResponse(index int) (*client.Response) {
-  return NewErrorResponse(index, http.StatusInternalServerError, nil, E.INTERNAL_SERVER_ERROR)
+  return NewErrorResponse(index, http.StatusInternalServerError, E.INTERNAL_SERVER_ERROR)
 }
 func NewServiceUnavailableResponse(index int) (*client.Response) {
-  return NewErrorResponse(index, http.StatusServiceUnavailable, nil)
+  return NewErrorResponse(index, http.StatusServiceUnavailable)
 }
 func NewServerOperationAbortedResponse(index int) (*client.Response) {
-  return NewErrorResponse(index, http.StatusInternalServerError, nil, E.OPERATION_ABORTED)
+  return NewErrorResponse(index, http.StatusInternalServerError, E.OPERATION_ABORTED)
 }
-func NewClientOperationAbortedResponse(index int, data interface{}) (*client.Response) {
-  return NewClientErrorResponse(index, data, E.OPERATION_ABORTED)
+func NewClientOperationAbortedResponse(index int) (*client.Response) {
+  return NewClientErrorResponse(index, http.StatusNotFound, E.OPERATION_ABORTED)
 }
 
 func FailAllRequestsWithErrorResponse(requests []*Request, status int, code... int) {
   for _,r := range requests {
-    r.Output = NewErrorResponse(r.Index, status, nil, code...)
+    r.Output = NewErrorResponse(r.Index, status, code...)
   }
 }
 func FailAllRequestsWithClientOperationAbortedResponse(requests []*Request) {
