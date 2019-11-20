@@ -9,6 +9,7 @@ import (
   "net/http"
 
   "github.com/charmixer/bulky/client"
+  "gopkg.in/go-playground/validator.v10"
   E "github.com/charmixer/bulky/errors"
 )
 
