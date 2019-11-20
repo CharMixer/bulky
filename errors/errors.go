@@ -1,5 +1,11 @@
 package errors
 
+import (
+  "gopkg.in/go-playground/validator.v10"
+)
+
+var Validate = validator.New()
+
 const INTERNAL_SERVER_ERROR      = -1
 const EMPTY_REQUEST_NOT_ALLOWED  = -2
 const MAX_REQUESTS_EXCEEDED      = -3

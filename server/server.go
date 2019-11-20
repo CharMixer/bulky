@@ -7,13 +7,10 @@ import (
   "time"
   "encoding/json"
   "net/http"
-  "gopkg.in/go-playground/validator.v9"
 
   "github.com/charmixer/bulky/client"
   E "github.com/charmixer/bulky/errors"
 )
-
-var validate = validator.New()
 
 type Request struct {
   Index int
@@ -79,7 +76,7 @@ func HandleRequest(iRequests interface{}, iHandleRequests IHandleRequests, param
 
       // validate requests
       if request.Input != nil { // if not the empty set, then validate
-        err := validate.Struct(request.Input)
+        err := E.Validate.Struct(request.Input)
         if err != nil {
 
           var errorResponses []client.ErrorResponse
@@ -145,7 +142,7 @@ func OutputValidateRequests(requests []*Request) (error){
     }
 
     // output validation
-    err := validate.Struct(request.Output)
+    err := E.Validate.Struct(request.Output)
     if err != nil {
       i, _ := json.MarshalIndent(request.Input, "", "  ")
       o, _ := json.MarshalIndent(request.Output, "", "  ")
