@@ -11,7 +11,7 @@ import (
 
 	"github.com/charmixer/bulky/client"
 	E "github.com/charmixer/bulky/errors"
-	"gopkg.in/go-playground/validator.v10"
+	"github.com/go-playground/validator/v10"
 )
 
 type Request struct {
